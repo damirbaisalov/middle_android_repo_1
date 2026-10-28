@@ -3,10 +3,12 @@ package ru.yandexpraktikum.cardsanimation.views
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
+import android.util.Log.d
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import ru.yandexpraktikum.cardsanimation.model.CardData
+import kotlin.math.abs
 
 private const val CARDS_ANIMATIONS_VIEW_TAG = "CardsAnimationsView"
 
@@ -100,10 +102,12 @@ class AnimatedCardStackView @JvmOverloads constructor(
     fun reorderCards(cards: List<CardData>): List<CardData> {
         return cards.drop(1) + cards.first()
     }
+
     // TODO: [Задание 2] Добавьте обработку жестов
     // Подсказка: Используйте GestureDetector с методом onFling для обработки свайпов
     private var verticalDragOffset = 0f
-    private val threshold = 50
+    private var horizontalDragOffset = 0f
+    private val threshold = 100f
     private var flingHandled = false
 
     private val gestureDetector =
@@ -115,8 +119,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 distanceY: Float
             ): Boolean {
                 verticalDragOffset -= distanceY
-                Log.d(CARDS_ANIMATIONS_VIEW_TAG, "onScroll: distanceX = $distanceX, distanceY = $distanceY")
-                return super.onScroll(e1, e2, distanceX, distanceY)
+                horizontalDragOffset -= distanceX
+                return true
             }
 
             override fun onFling(
@@ -125,42 +129,64 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
-                when {
-                    velocityY < 0f -> isRotated = true
-                    velocityY > 0f -> isRotated = false
+                val isHorizontalFling = abs(velocityX) > abs(velocityY)
+                if (isHorizontalFling) {
+                    startCardSwapAnimation(cards.last())
+                } else {
+                    when {
+                        velocityY < 0f -> isRotated = true
+                        velocityY > 0f -> isRotated = false
+                    }
+                    updateCardPositions()
                 }
-
                 flingHandled = true
-                updateCardPositions()
-                Log.d(CARDS_ANIMATIONS_VIEW_TAG, "onFling: velocityX = $velocityX, velocityY = $velocityY")
-                return super.onFling(e1, e2, velocityX, velocityY)
+                return true
             }
         })
 
     // Нужно также переопределить onTouchEvent
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            verticalDragOffset = 0f
+            horizontalDragOffset = 0f
+            flingHandled = false
+        }
         gestureDetector.onTouchEvent(event)
-        verticalRotation(event)
+
+        if (event.action == MotionEvent.ACTION_UP && !flingHandled) {
+            handleDragEnd()
+        }
+
+        if (event.action == MotionEvent.ACTION_CANCEL) {
+            verticalDragOffset = 0f
+            horizontalDragOffset = 0f
+            flingHandled = false
+        }
         return true
     }
 
     // TODO: [Задание 3] Добавьте обработку вертикальных свайпов (вверх/вниз)
-    private fun verticalRotation(event: MotionEvent) {
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            verticalDragOffset = 0f
-            flingHandled = false
+    private fun handleVerticalSwipe() {
+        when {
+            verticalDragOffset < -threshold -> isRotated = true
+            verticalDragOffset > threshold -> isRotated = false
         }
-
-        gestureDetector.onTouchEvent(event)
-
-        if (event.action == MotionEvent.ACTION_UP && !flingHandled) {
-            when {
-                verticalDragOffset < -threshold -> isRotated = true
-                verticalDragOffset > threshold -> isRotated = false
-            }
-            updateCardPositions()
-        }
+        updateCardPositions()
     }
 
     // TODO: [Задание 4] Добавьте обработку горизонтальных свайпов (влево/вправо)
+    private fun handleHorizontalSwipe() {
+        if (abs(horizontalDragOffset) > threshold) {
+            startCardSwapAnimation(cards.last())
+        }
+    }
+
+    private fun handleDragEnd() {
+        val isHorizontalDrag = abs(horizontalDragOffset) > abs(verticalDragOffset)
+        if (isHorizontalDrag) {
+            handleHorizontalSwipe()
+        } else {
+            handleVerticalSwipe()
+        }
+    }
 }
