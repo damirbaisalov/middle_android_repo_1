@@ -54,7 +54,10 @@ fun AnimatedCardStack(cards: List<CardData>) {
         val isHorizontalDrag = abs(horizontalDragOffset) > abs(verticalDragOffset)
         if (isHorizontalDrag) {
             if (abs(horizontalDragOffset) > threshold) {
-                displayedCards = reorderCards(displayedCards)
+                animationState = CardSwapAnimationState(
+                    isAnimating = true,
+                    animationStep = 1
+                )
             }
         } else {
             when {
@@ -100,7 +103,9 @@ fun AnimatedCardStack(cards: List<CardData>) {
                 AnimatedCard(
                     cardIndex = i,
                     targetRotation = targetRotation,
-                    cardData = cardData
+                    cardData = cardData,
+                    isAnimating = animationState.isAnimating && i == 0,
+                    animationStep = animationState.animationStep,
                     // TODO: [Задание 5] Здесь добавьте параметры анимации карты
                 )
             }
