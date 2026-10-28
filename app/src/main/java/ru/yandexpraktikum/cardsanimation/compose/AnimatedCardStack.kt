@@ -45,9 +45,6 @@ fun AnimatedCardStack(cards: List<CardData>) {
     var verticalDragOffset by remember { mutableFloatStateOf(0f) }
     var horizontalDragOffset by remember { mutableFloatStateOf(0f) }
     val threshold = 100f
-    // TODO: [Задание 2] Добавьте обработку жестов
-    // Подсказка: Используйте Modifier.pointerInput() с методом detectDragGestures()
-
     var animationState by remember { mutableStateOf(CardSwapAnimationState()) }
 
     fun handleDragEnd() {
@@ -99,6 +96,12 @@ fun AnimatedCardStack(cards: List<CardData>) {
         displayedCards.forEachIndexed { i, cardData ->
             key(cardData.imageResId) {
                 val targetRotation = calculateCardRotation(i, cardCount, isRotated)
+                val finalIndex = if (i == 0) cardCount - 1 else i - 1
+                val finalRotation = calculateCardRotation(
+                    cardIndex = finalIndex,
+                    cardCount = cardCount,
+                    isRotated = isRotated
+                )
 
                 AnimatedCard(
                     cardIndex = i,
@@ -106,18 +109,40 @@ fun AnimatedCardStack(cards: List<CardData>) {
                     cardData = cardData,
                     isAnimating = animationState.isAnimating && i == 0,
                     animationStep = animationState.animationStep,
+                    finalRotation = finalRotation,
                     onAnimationStepComplete = { completedStep ->
-                        if (
-                            animationState.isAnimating &&
-                            animationState.animationStep == 1 &&
-                            completedStep == 1
-                        ) {
-                            animationState = animationState.copy(animationStep = 2)
-                        }
+                        handleAnimationStepComplete(
+                            step = completedStep,
+                            cardIndex = i,
+                            onStepChange = { newStep ->
+                                animationState = animationState.copy(
+                                    isAnimating = true,
+                                    animationStep = newStep
+                                )
+                            },
+                            onAnimationComplete = {
+                                displayedCards = reorderCards(displayedCards)
+                                animationState = CardSwapAnimationState()
+                            }
+                        )
                     }
-                    // TODO: [Задание 5] Здесь добавьте параметры анимации карты
                 )
             }
+        }
+    }
+}
+
+private fun handleAnimationStepComplete(
+    step: Int,
+    cardIndex: Int,
+    onStepChange: (Int) -> Unit,
+    onAnimationComplete: () -> Unit
+) {
+    if (cardIndex == 0) {
+        when (step) {
+            1 -> onStepChange(2)
+            2 -> onStepChange(3)
+            3 -> onAnimationComplete()
         }
     }
 }

@@ -27,13 +27,23 @@ fun AnimatedCard(
     cardIndex: Int,
     cardData: CardData,
     targetRotation: Float,
+    finalRotation: Float,
     isAnimating: Boolean,
     animationStep: Int,
     onAnimationStepComplete: ((Int) -> Unit)? = null
 ) {
-    // TODO: [Задание 1] Добавьте анимацию поворота карты
-    // Подсказка: используйте animateFloatAsState для плавной анимации
-    val animatedRotation by animateFloatAsState(targetRotation)
+    val animatedRotation by animateFloatAsState(
+        targetValue = when {
+            animationStep == 3 -> finalRotation
+            isAnimating -> targetRotation
+            else -> targetRotation
+        },
+        animationSpec = tween(durationMillis = if (animationStep == 3) 300 else 800),
+        finishedListener = {
+            if (animationStep == 3 && isAnimating) onAnimationStepComplete?.invoke(3)
+        },
+        label = "rotation"
+    )
 
     val density = LocalDensity.current
     val animatedTranslationX by animateFloatAsState(
@@ -77,7 +87,6 @@ fun AnimatedCard(
     Card(
         modifier = Modifier
             .size(width = 100.dp, height = 160.dp)
-            // TODO: [Задание 5] Добавьте анимацию карты при свайпе вправо или влево
             .graphicsLayer {
                 rotationZ = animatedRotation
                 transformOrigin = TransformOrigin(0.5f, 1.0f)
