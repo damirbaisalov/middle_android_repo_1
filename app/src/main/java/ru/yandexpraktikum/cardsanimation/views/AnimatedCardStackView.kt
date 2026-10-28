@@ -25,13 +25,6 @@ class AnimatedCardStackView @JvmOverloads constructor(
         setupCards()
     }
 
-    init {
-        setOnClickListener {
-            isRotated = !isRotated
-            updateCardPositions()
-        }
-    }
-
     private fun setupCards() {
         clearCards()
         cardDataList.forEachIndexed { index, cardData ->
@@ -109,6 +102,10 @@ class AnimatedCardStackView @JvmOverloads constructor(
     }
     // TODO: [Задание 2] Добавьте обработку жестов
     // Подсказка: Используйте GestureDetector с методом onFling для обработки свайпов
+    private var verticalDragOffset = 0f
+    private val threshold = 50
+    private var flingHandled = false
+
     private val gestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onScroll(
@@ -117,6 +114,7 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 distanceX: Float,
                 distanceY: Float
             ): Boolean {
+                verticalDragOffset -= distanceY
                 Log.d(CARDS_ANIMATIONS_VIEW_TAG, "onScroll: distanceX = $distanceX, distanceY = $distanceY")
                 return super.onScroll(e1, e2, distanceX, distanceY)
             }
@@ -127,6 +125,13 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
+                when {
+                    velocityY < 0f -> isRotated = true
+                    velocityY > 0f -> isRotated = false
+                }
+
+                flingHandled = true
+                updateCardPositions()
                 Log.d(CARDS_ANIMATIONS_VIEW_TAG, "onFling: velocityX = $velocityX, velocityY = $velocityY")
                 return super.onFling(e1, e2, velocityX, velocityY)
             }
@@ -135,10 +140,27 @@ class AnimatedCardStackView @JvmOverloads constructor(
     // Нужно также переопределить onTouchEvent
     override fun onTouchEvent(event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
+        verticalRotation(event)
         return true
     }
 
     // TODO: [Задание 3] Добавьте обработку вертикальных свайпов (вверх/вниз)
+    private fun verticalRotation(event: MotionEvent) {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            verticalDragOffset = 0f
+            flingHandled = false
+        }
+
+        gestureDetector.onTouchEvent(event)
+
+        if (event.action == MotionEvent.ACTION_UP && !flingHandled) {
+            when {
+                verticalDragOffset < -threshold -> isRotated = true
+                verticalDragOffset > threshold -> isRotated = false
+            }
+            updateCardPositions()
+        }
+    }
 
     // TODO: [Задание 4] Добавьте обработку горизонтальных свайпов (влево/вправо)
 }
