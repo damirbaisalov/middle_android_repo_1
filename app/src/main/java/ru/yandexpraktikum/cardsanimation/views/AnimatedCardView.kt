@@ -45,8 +45,6 @@ class AnimatedCardView @JvmOverloads constructor(
         cardView.cardElevation = (4 + index * 1).toFloat() * resources.displayMetrics.density
     }
 
-    // TODO: [Задание 1] Добавьте методы для анимации
-    // Подсказка: используйте ObjectAnimator для плавной анимации
     fun animateToRotationWithObjectAnimator(targetRotation: Float, duration: Long = 300) {
         val floatAnimation = ObjectAnimator.ofFloat(
             this,
@@ -58,8 +56,6 @@ class AnimatedCardView @JvmOverloads constructor(
         floatAnimation.start()
     }
 
-    // TODO: [Задание 1] Добавьте метод для анимации поворота карты (чтобы был плавный эффект раскрытия/закрытия колоды)
-    // fun animateToRotation(targetRotation: Float, duration: Long = 300) { ... }
     fun animateToRotation(targetRotation: Float, duration: Long = 300) {
         animate()
             .rotation(targetRotation)
@@ -67,8 +63,6 @@ class AnimatedCardView @JvmOverloads constructor(
             .start()
     }
 
-    // TODO: [Задание 5, шаг 1] Добавьте метод для анимации перетасовки карт (первым шагом нижняя карта двигается вправо)
-    // fun moveCardRight(onComplete: (() -> Unit)? = null) { ... }
     fun moveCardRight(onComplete: (() -> Unit)? = null) {
         val moveDistance = 50f * resources.displayMetrics.density
         val currentRotationRad = Math.toRadians(rotation.toDouble())
@@ -95,7 +89,6 @@ class AnimatedCardView @JvmOverloads constructor(
         animatorSet.start()
     }
 
-    // TODO: [Задание 5, шаг 2] Добавьте метод для анимации выдвижения нижней карты наверх
     fun moveCardToTop(onComplete: (() -> Unit)? = null) {
         val parent = parent as? FrameLayout ?: return
         val cardWidth = 100f * resources.displayMetrics.density
@@ -119,6 +112,20 @@ class AnimatedCardView @JvmOverloads constructor(
         animatorSet.start()
     }
 
-    // TODO: [Задание 5, шаг 3] Добавьте анимацию перемещения всей колоды карты в желаемую позицию
-    // fun adjustToFinalPosition(finalRotation: Float, finalZOrder: Int, onComplete: (() -> Unit)? = null) { ... }
+    fun adjustToFinalPosition(
+        finalRotation: Float,
+        finalZOrder: Int,
+        onComplete: (() -> Unit)? = null
+    ) {
+        ObjectAnimator.ofFloat(this, "rotation", rotation, finalRotation).apply {
+            duration = 300
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    setStackPosition(finalZOrder)
+                    onComplete?.invoke()
+                }
+            })
+            start()
+        }
+    }
 } 
