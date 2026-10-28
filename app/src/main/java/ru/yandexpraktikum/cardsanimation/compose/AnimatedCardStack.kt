@@ -106,6 +106,15 @@ fun AnimatedCardStack(cards: List<CardData>) {
                     cardData = cardData,
                     isAnimating = animationState.isAnimating && i == 0,
                     animationStep = animationState.animationStep,
+                    onAnimationStepComplete = { completedStep ->
+                        if (
+                            animationState.isAnimating &&
+                            animationState.animationStep == 1 &&
+                            completedStep == 1
+                        ) {
+                            animationState = animationState.copy(animationStep = 2)
+                        }
+                    }
                     // TODO: [Задание 5] Здесь добавьте параметры анимации карты
                 )
             }
