@@ -21,6 +21,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
     private var cardDataList: List<CardData> = emptyList()
     private val cards = mutableListOf<AnimatedCardView>()
     private var isRotated = false
+    private var isAnimating = false
+    private var animationStep = 0
 
     fun setCards(newCardDataList: List<CardData>) {
         cardDataList = newCardDataList
@@ -94,8 +96,19 @@ class AnimatedCardStackView @JvmOverloads constructor(
     private fun startCardSwapAnimation(bottomCard: AnimatedCardView) {
         // TODO: [Задание 5] Добавьте анимацию перетасовки карт
         // На данном этапе просто быстро двигаем нижнюю карту наверх
-        cardDataList = reorderCards(cardDataList)
+        if (isAnimating) return
+
+        isAnimating = true
+        animationStep = 1
+
+        // TODO: Реализовать 3-шаговую анимацию в следующих этапах
+        // Пока оставляем простую перестановку
+        val reorderedCards = cardDataList.drop(1) + cardDataList.first()
+        cardDataList = reorderedCards
         setupCards()
+
+        isAnimating = false
+        animationStep = 0
     }
 
     // Простая функция перестановки карт
@@ -129,9 +142,15 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
+                if (isAnimating) {
+                    flingHandled = true
+                    return true
+                }
+
                 val isHorizontalFling = abs(velocityX) > abs(velocityY)
                 if (isHorizontalFling) {
-                    startCardSwapAnimation(cards.last())
+                    val bottomCard = cards.firstOrNull() ?: return true
+                    startCardSwapAnimation(bottomCard)
                 } else {
                     when {
                         velocityY < 0f -> isRotated = true
@@ -177,11 +196,14 @@ class AnimatedCardStackView @JvmOverloads constructor(
     // TODO: [Задание 4] Добавьте обработку горизонтальных свайпов (влево/вправо)
     private fun handleHorizontalSwipe() {
         if (abs(horizontalDragOffset) > threshold) {
-            startCardSwapAnimation(cards.last())
+            val bottomCard = cards.firstOrNull() ?: return
+            startCardSwapAnimation(bottomCard)
         }
     }
 
     private fun handleDragEnd() {
+        if (isAnimating) return
+
         val isHorizontalDrag = abs(horizontalDragOffset) > abs(verticalDragOffset)
         if (isHorizontalDrag) {
             handleHorizontalSwipe()
