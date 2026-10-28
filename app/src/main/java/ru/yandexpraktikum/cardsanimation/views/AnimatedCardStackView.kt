@@ -2,8 +2,13 @@ package ru.yandexpraktikum.cardsanimation.views
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.widget.FrameLayout
 import ru.yandexpraktikum.cardsanimation.model.CardData
+
+private const val CARDS_ANIMATIONS_VIEW_TAG = "CardsAnimationsView"
 
 class AnimatedCardStackView @JvmOverloads constructor(
     context: Context,
@@ -104,6 +109,34 @@ class AnimatedCardStackView @JvmOverloads constructor(
     }
     // TODO: [Задание 2] Добавьте обработку жестов
     // Подсказка: Используйте GestureDetector с методом onFling для обработки свайпов
+    private val gestureDetector =
+        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onScroll(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                distanceX: Float,
+                distanceY: Float
+            ): Boolean {
+                Log.d(CARDS_ANIMATIONS_VIEW_TAG, "onScroll: distanceX = $distanceX, distanceY = $distanceY")
+                return super.onScroll(e1, e2, distanceX, distanceY)
+            }
+
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                Log.d(CARDS_ANIMATIONS_VIEW_TAG, "onFling: velocityX = $velocityX, velocityY = $velocityY")
+                return super.onFling(e1, e2, velocityX, velocityY)
+            }
+        })
+
+    // Нужно также переопределить onTouchEvent
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(event)
+        return true
+    }
 
     // TODO: [Задание 3] Добавьте обработку вертикальных свайпов (вверх/вниз)
 
