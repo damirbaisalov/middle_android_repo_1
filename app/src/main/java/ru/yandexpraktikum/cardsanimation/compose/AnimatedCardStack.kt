@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import ru.yandexpraktikum.cardsanimation.model.CardData
+import ru.yandexpraktikum.cardsanimation.model.CardSwapAnimationState
 import kotlin.math.abs
 
 /**
@@ -47,6 +48,8 @@ fun AnimatedCardStack(cards: List<CardData>) {
     // TODO: [Задание 2] Добавьте обработку жестов
     // Подсказка: Используйте Modifier.pointerInput() с методом detectDragGestures()
 
+    var animationState by remember { mutableStateOf(CardSwapAnimationState()) }
+
     fun handleDragEnd() {
         val isHorizontalDrag = abs(horizontalDragOffset) > abs(verticalDragOffset)
         if (isHorizontalDrag) {
@@ -62,6 +65,7 @@ fun AnimatedCardStack(cards: List<CardData>) {
         verticalDragOffset = 0f
         horizontalDragOffset = 0f
     }
+
     Box(
         modifier = Modifier
             .pointerInput(Unit) {
@@ -75,7 +79,12 @@ fun AnimatedCardStack(cards: List<CardData>) {
                         horizontalDragOffset = 0f
                     },
                     onDragEnd = {
-                        handleDragEnd()
+                        if (!animationState.isAnimating) {
+                            handleDragEnd()
+                        } else {
+                            verticalDragOffset = 0f
+                            horizontalDragOffset = 0f
+                        }
                     }
                 ) { _, dragAmount ->
                     verticalDragOffset += dragAmount.y
