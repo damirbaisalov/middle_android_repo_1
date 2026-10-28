@@ -20,6 +20,13 @@ class AnimatedCardStackView @JvmOverloads constructor(
         setupCards()
     }
 
+    init {
+        setOnClickListener {
+            isRotated = !isRotated
+            updateCardPositions()
+        }
+    }
+
     private fun setupCards() {
         clearCards()
         cardDataList.forEachIndexed { index, cardData ->
@@ -72,7 +79,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
             cardView.pivotY = cardHeight
 
             // TODO: [Задание 1] Замените на метод, который анимирует движение карты
-            cardView.rotation = targetRotation
+//            cardView.rotation = targetRotation
+            cardView.animateToRotationWithObjectAnimator(targetRotation)
         }
     }
 
