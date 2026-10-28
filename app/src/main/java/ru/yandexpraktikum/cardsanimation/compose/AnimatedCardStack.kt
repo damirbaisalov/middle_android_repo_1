@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import ru.yandexpraktikum.cardsanimation.model.CardData
+import kotlin.math.abs
 
 /**
  * Метод для вычисления поворота карты в конкретной позиции
@@ -38,30 +39,52 @@ private const val CARDS_ANIMATIONS_COMPOSE_TAG = "CardsAnimationsCompose"
 @Composable
 fun AnimatedCardStack(cards: List<CardData>) {
     val cardCount = cards.size
+    var displayedCards by remember(cards) { mutableStateOf(cards) }
     var isRotated by remember { mutableStateOf(false) }
     var verticalDragOffset by remember { mutableFloatStateOf(0f) }
-    val threshold = 0
+    var horizontalDragOffset by remember { mutableFloatStateOf(0f) }
+    val threshold = 100f
     // TODO: [Задание 2] Добавьте обработку жестов
     // Подсказка: Используйте Modifier.pointerInput() с методом detectDragGestures()
 
+    fun handleDragEnd() {
+        val isHorizontalDrag = abs(horizontalDragOffset) > abs(verticalDragOffset)
+        if (isHorizontalDrag) {
+            if (abs(horizontalDragOffset) > threshold) {
+                displayedCards = reorderCards(displayedCards)
+            }
+        } else {
+            when {
+                verticalDragOffset < -threshold -> isRotated = true
+                verticalDragOffset > threshold -> isRotated = false
+            }
+        }
+        verticalDragOffset = 0f
+        horizontalDragOffset = 0f
+    }
     Box(
         modifier = Modifier
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragEnd = {
-                        when {
-                            verticalDragOffset < threshold -> isRotated = true
-                            verticalDragOffset >= threshold -> isRotated = false
-                        }
+                    onDragStart = {
                         verticalDragOffset = 0f
+                        horizontalDragOffset = 0f
+                    },
+                    onDragCancel = {
+                        verticalDragOffset = 0f
+                        horizontalDragOffset = 0f
+                    },
+                    onDragEnd = {
+                        handleDragEnd()
                     }
                 ) { _, dragAmount ->
-                    verticalDragOffset = dragAmount.y
+                    verticalDragOffset += dragAmount.y
+                    horizontalDragOffset += dragAmount.x
                 }
             },
         contentAlignment = Alignment.Center
     ) {
-        cards.forEachIndexed { i, cardData ->
+        displayedCards.forEachIndexed { i, cardData ->
             key(cardData.imageResId) {
                 val targetRotation = calculateCardRotation(i, cardCount, isRotated)
 
